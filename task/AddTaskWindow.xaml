@@ -1,0 +1,22 @@
+﻿<Window x:Class="Task.AddTaskWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add Task" Height="400" Width="400">
+    <Grid>
+        <StackPanel Margin="20">
+            <TextBlock Text="Title:" FontSize="14"/>
+            <TextBox Name="TaskTitleTextBox" Height="30" Margin="0,5,0,15"/>
+
+            <TextBlock Text="Description:" FontSize="14"/>
+            <TextBox Name="TaskDescriptionTextBox" Height="60" Margin="0,5,0,15" AcceptsReturn="True"/>
+
+            <TextBlock Text="Due Date:" FontSize="14"/>
+            <DatePicker Name="TaskDueDatePicker" Margin="0,5,0,15"/>
+
+            <CheckBox Name="IsRecurringCheckBox" Content="Is this task recurring? 🔄️" Margin="5"/>
+
+
+            <Button Content="Save Task" Width="100" Height="30" HorizontalAlignment="Center" Click="SaveTaskButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

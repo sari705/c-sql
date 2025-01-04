@@ -1,0 +1,107 @@
+﻿<Window x:Class="Task.ViewTasksWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:Task"
+        Title="View Tasks" Height="600" Width="893">
+
+    <Window.Resources>
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <Style TargetType="Button">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Background" Value="LightBlue"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- הגדרת שורות -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- שורה לחיפוש וסינון -->
+            <RowDefinition Height="*"/>
+            <!-- שורה ל-DataGrid -->
+            <RowDefinition Height="Auto"/>
+            <!-- שורה לכפתורים -->
+        </Grid.RowDefinitions>
+
+        <!-- חיפוש וסינון -->
+        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
+            <ComboBox Name="SearchTextBox" Width="200" Height="30" Margin="5" IsEditable="True"/>
+            <Button Content="Search" Width="100" Height="30" Margin="5" Click="SearchButton_Click"/>
+            <ComboBox Name="StatusFilterComboBox" Width="150" Height="30" Margin="5" SelectionChanged="StatusFilterComboBox_SelectionChanged">
+                <ComboBoxItem Content="All" IsSelected="True"/>
+                <ComboBoxItem Content="Pending"/>
+                <ComboBoxItem Content="Completed"/>
+                <ComboBoxItem Content="In Progress"/>
+
+            </ComboBox>
+            <TextBox Name="NewStatusTextBox" Width="150" Height="30" Margin="5"/>
+            <Button Content="Add Status" Width="100" Height="30" Margin="5" Click="AddStatusButton_Click"/>
+            
+        </StackPanel>
+
+        <!-- DataGrid להצגת המשימות -->
+        <DataGrid Name="TasksDataGrid" Grid.Row="1" AutoGenerateColumns="False" HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch" Margin="10" RowHeight="30" CanUserAddRows="False" ColumnWidth="*">
+            <DataGrid.Resources>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="LightBlue"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                </Style>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <!-- צביעה לפי סטטוס -->
+                        <DataTrigger Binding="{Binding Path=Status}" Value="Pending">
+                            <Setter Property="Background" Value="LightYellow"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=Status}" Value="Completed">
+                            <Setter Property="Background" Value="LightGreen"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=Status}" Value="In Progress">
+                            <Setter Property="Background" Value="LightBlue"/>
+                        </DataTrigger>
+                        <!-- טריגר לחיווי במעבר עכבר -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="LightCyan"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Path=Id}" Width="50" SortMemberPath="Id"/>
+                <DataGridTextColumn Header="Title" Binding="{Binding Path=Title}"  SortMemberPath="Title"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Path=Description}"  SortMemberPath="Description"/>
+                <DataGridTextColumn Header="Due Date" Binding="{Binding Path=DueDate}"  SortMemberPath="DueDate"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Path=Status}"  SortMemberPath="Status"/>
+                <DataGridTemplateColumn Header="Recurring" Width="70">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="🔄️"
+                       Visibility="{Binding Path=IsRecurring, Converter={StaticResource BoolToVisibilityConverter}}"
+                       FontSize="18" Foreground="Blue" ToolTip="This task is recurring"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+
+        <!-- כפתורים -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
+            <Button Content="Edit Task" Click="EditTaskButton_Click"/>
+            <Button Content="Delete Task" Background="LightCoral" Click="DeleteTaskButton_Click"/>
+            <Button Content="Export to CSV" Background="LightYellow" Foreground="Black" Click="ExportButton_Click"/>
+            <Button Content="Mark as Completed" Background="LightGreen" Click="MarkAsCompletedButton_Click"/>
+        </StackPanel>
+    </Grid>
+
+</Window>
