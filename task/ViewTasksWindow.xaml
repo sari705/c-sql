@@ -99,7 +99,7 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
             <Button Content="Edit Task" Click="EditTaskButton_Click"/>
             <Button Content="Delete Task" Background="LightCoral" Click="DeleteTaskButton_Click"/>
-            <Button Content="Export to CSV" Background="LightYellow" Foreground="Black" Click="ExportButton_Click"/>
+            <Button Content="Export to XL" Background="LightYellow" Foreground="Black" Click="ExportButton_Click"/>
             <Button Content="Mark as Completed" Background="LightGreen" Click="MarkAsCompletedButton_Click"/>
         </StackPanel>
     </Grid>

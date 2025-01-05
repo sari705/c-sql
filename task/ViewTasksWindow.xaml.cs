@@ -1,24 +1,33 @@
-﻿using System;
+﻿using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Drawing;
+using System.Linq;
 
 namespace Task
 {
     public partial class ViewTasksWindow : Window
     {
-
         private List<string> _statuses = new List<string>();
-
 
         private void LoadStatuses()
         {
             try
             {
-                string connectionString = "Server=sara;Database=TaskManagerDB;Trusted_Connection=True;";
+                string connectionString = ConfigurationManager.ConnectionStrings["TaskManagerDB"].ConnectionString;
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    MessageBox.Show("Connection string 'TaskManagerDB' not found in the configuration file.");
+                    return;
+                }
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -48,7 +57,6 @@ namespace Task
             }
         }
 
-
         public ViewTasksWindow()
         {
             InitializeComponent();
@@ -56,22 +64,18 @@ namespace Task
             // ביטול זמני של האירוע
             StatusFilterComboBox.SelectionChanged -= StatusFilterComboBox_SelectionChanged;
 
-            
-
             LoadStatuses();
-
             LoadTasks();
 
             // החזרת האירוע לאחר הטעינה
             StatusFilterComboBox.SelectionChanged += StatusFilterComboBox_SelectionChanged;
         }
 
-
         private void LoadTasks()
         {
             try
             {
-                string connectionString = "Server=sara;Database=TaskManagerDB;Trusted_Connection=True;";
+                string connectionString = ConfigurationManager.ConnectionStrings["TaskManagerDB"].ConnectionString;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -128,8 +132,6 @@ namespace Task
             }
         }
 
-
-
         private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
         {
             if (TasksDataGrid.SelectedItem is DataRowView row)
@@ -138,7 +140,7 @@ namespace Task
 
                 try
                 {
-                    string connectionString = "Server=sara;Database=TaskManagerDB;Trusted_Connection=True;";
+                    string connectionString = ConfigurationManager.ConnectionStrings["TaskManagerDB"].ConnectionString;
                     using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                         connection.Open();
@@ -171,34 +173,93 @@ namespace Task
 
             if (TasksDataGrid.ItemsSource is DataView dataView)
             {
-                dataView.RowFilter = $"Title LIKE '%{searchText}%' OR Description LIKE '%{searchText}%'";
+                dataView.RowFilter = $"Title LIKE '%{searchText}%' OR Description LIKE '%{searchText}%";
             }
         }
 
         private void ExportButton_Click(object sender, RoutedEventArgs e)
         {
             DataTable dataTable = (TasksDataGrid.ItemsSource as DataView)?.ToTable();
+            if (dataTable.Rows.Count == 0)
+            {
+                MessageBox.Show("No data to export.");
+                return;
+            }
+
             if (dataTable != null)
             {
-                string filePath = "tasks.csv";
-                using (StreamWriter writer = new StreamWriter(filePath))
+                Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog
                 {
-                    foreach (DataColumn column in dataTable.Columns)
-                    {
-                        writer.Write(column.ColumnName + ",");
-                    }
-                    writer.WriteLine();
+                    FileName = "tasks.xlsx",
+                    DefaultExt = ".xlsx",
+                    Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*"
+                };
 
-                    foreach (DataRow row in dataTable.Rows)
+                bool? result = saveFileDialog.ShowDialog();
+
+                if (result == true)
+                {
+                    string filePath = saveFileDialog.FileName;
+
+                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                    using (ExcelPackage package = new ExcelPackage())
                     {
-                        foreach (var item in row.ItemArray)
+                        ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Tasks");
+
+                        // הוספת כותרות
+                        for (int i = 0; i < dataTable.Columns.Count; i++)
                         {
-                            writer.Write(item + ",");
+                            worksheet.Cells[1, i + 1].Value = dataTable.Columns[i].ColumnName;
                         }
-                        writer.WriteLine();
+
+                        // עיצוב כותרות
+                        using (ExcelRange range = worksheet.Cells[1, 1, 1, dataTable.Columns.Count])
+                        {
+                            range.Style.Font.Bold = true;
+                            range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            //range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                            range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        }
+
+                        // הוספת נתונים
+                        for (int i = 0; i < dataTable.Rows.Count; i++)
+                        {
+                            for (int j = 0; j < dataTable.Columns.Count; j++)
+                            {
+                                object value = dataTable.Rows[i][j];
+
+                                // המרה לתאריך אם הערך הוא מספר בתור תאריך
+                                if (dataTable.Columns[j].ColumnName.Contains("Date") && value is double numericDate)
+                                {
+                                    value = DateTime.FromOADate(numericDate).ToString("dd/MM/yyyy");
+                                }
+
+                                worksheet.Cells[i + 2, j + 1].Value = value;
+                            }
+                        }
+
+                        // התאמת רוחב עמודות
+                        worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                        package.SaveAs(new FileInfo(filePath));
                     }
+
+                    MessageBox.Show($"Tasks exported to {filePath}");
+                    if (MessageBox.Show("Do you want to open the file?", "Export Complete", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                        {
+                            FileName = filePath,
+                            UseShellExecute = true
+                        });
+                    }
+
                 }
-                MessageBox.Show($"Tasks exported to {filePath}");
+                else
+                {
+                    MessageBox.Show("Export cancelled by user.");
+                }
             }
         }
 
@@ -223,7 +284,7 @@ namespace Task
 
                 try
                 {
-                    string connectionString = "Server=sara;Database=TaskManagerDB;Trusted_Connection=True;";
+                    string connectionString = ConfigurationManager.ConnectionStrings["TaskManagerDB"].ConnectionString;
                     using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                         connection.Open();
@@ -260,7 +321,7 @@ namespace Task
 
             if (TasksDataGrid.ItemsSource is DataView dataView)
             {
-                string selectedStatus = (StatusFilterComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+                string selectedStatus = StatusFilterComboBox.SelectedItem?.ToString();
                 if (selectedStatus == "All")
                 {
                     dataView.RowFilter = string.Empty; // הצגת כל המשימות
@@ -272,7 +333,6 @@ namespace Task
             }
         }
 
-
         private void AddStatusButton_Click(object sender, RoutedEventArgs e)
         {
             string newStatus = NewStatusTextBox.Text.Trim();
@@ -280,7 +340,7 @@ namespace Task
             {
                 try
                 {
-                    string connectionString = "Server=sara;Database=TaskManagerDB;Trusted_Connection=True;";
+                    string connectionString = ConfigurationManager.ConnectionStrings["TaskManagerDB"].ConnectionString;
                     using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                         connection.Open();
@@ -312,8 +372,5 @@ namespace Task
                 MessageBox.Show("Please enter a valid and unique status.");
             }
         }
-
-
-
     }
 }
