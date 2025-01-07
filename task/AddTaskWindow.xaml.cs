@@ -56,6 +56,11 @@ namespace Task
                 MessageBox.Show("Title is required and cannot be empty.");
                 return false;
             }
+            if (string.IsNullOrWhiteSpace(dueDate))
+            {
+                MessageBox.Show("Due date is required and cannot be empty.");
+                return false;
+            }
 
             if (title.Length > 50)
             {
