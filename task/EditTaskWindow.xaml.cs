@@ -11,26 +11,29 @@ namespace Task
 
         private List<string> _statuses;
 
-        public EditTaskWindow(int taskId, string title, string description, DateTime? dueDate, string status, List<string> statuses)
+        public EditTaskWindow(int taskId, string title, string description, DateTime? dueDate, string status, bool isRecurring, List<string> statuses)
         {
             InitializeComponent();
 
-            _taskId = taskId; // תיקון העברת המזהה
+            _taskId = taskId;
             _statuses = statuses;
 
             TaskTitleTextBox.Text = title;
             TaskDescriptionTextBox.Text = description;
             TaskDueDatePicker.SelectedDate = dueDate;
 
-            // עדכון תיבת הבחירה
-            TaskStatusComboBox.Items.Clear(); // מחיקה בטוחה של פריטים קיימים
+            // עדכון ComboBox עם סטטוסים
+            TaskStatusComboBox.Items.Clear();
             foreach (var s in _statuses)
             {
                 TaskStatusComboBox.Items.Add(s);
             }
+            TaskStatusComboBox.SelectedItem = status;
 
-            TaskStatusComboBox.SelectedItem = status; // בחירת הסטטוס הנוכחי
+            // קביעת הערך של CheckBox
+            RecurringCheckBox.IsChecked = isRecurring;
         }
+
 
 
 
@@ -40,6 +43,7 @@ namespace Task
             string title = TaskTitleTextBox.Text;
             string description = TaskDescriptionTextBox.Text;
             string status = TaskStatusComboBox.SelectedItem?.ToString();
+            bool isRecurring = RecurringCheckBox.IsChecked ?? false;
 
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -53,7 +57,7 @@ namespace Task
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string query = "UPDATE Tasks SET Title = @Title, Description = @Description, Status = @Status WHERE Id = @Id";
+                    string query = "UPDATE Tasks SET Title = @Title, Description = @Description, Status = @Status, IsRecurring = @IsRecurring WHERE Id = @Id";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
@@ -61,6 +65,7 @@ namespace Task
                         command.Parameters.AddWithValue("@Title", title);
                         command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(description) ? DBNull.Value : (object)description);
                         command.Parameters.AddWithValue("@Status", status);
+                        command.Parameters.AddWithValue("@IsRecurring", isRecurring);
 
                         command.ExecuteNonQuery();
                     }
@@ -74,5 +79,6 @@ namespace Task
                 MessageBox.Show($"Error: {ex.Message}");
             }
         }
+
     }
 }

@@ -6,17 +6,35 @@
         Title="View Tasks" Height="600" Width="893">
 
     <Window.Resources>
+        <!-- המרה לבדיקת ערכים בוליאניים -->
         <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+
+        <!-- סגנון כפתורים מעוגלי פינות -->
         <Style TargetType="Button">
+            <Setter Property="Background" Value="LightBlue"/>
+            <Setter Property="Foreground" Value="Black"/>
             <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Height" Value="40"/>
             <Setter Property="Width" Value="120"/>
             <Setter Property="Margin" Value="10"/>
-            <Setter Property="Background" Value="LightBlue"/>
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="DarkBlue"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -31,6 +49,14 @@
             <!-- שורה לכפתורים -->
         </Grid.RowDefinitions>
 
+        <!-- Spinner -->
+        <Border Background="#80000000" Visibility="Collapsed" Name="SpinnerGrid" Grid.RowSpan="3">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Loading..." FontSize="16" Foreground="White" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20" />
+            </StackPanel>
+        </Border>
+
         <!-- חיפוש וסינון -->
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
             <ComboBox Name="SearchTextBox" Width="200" Height="30" Margin="5" IsEditable="True"/>
@@ -40,26 +66,23 @@
                 <ComboBoxItem Content="Pending"/>
                 <ComboBoxItem Content="Completed"/>
                 <ComboBoxItem Content="In Progress"/>
-
             </ComboBox>
-            <TextBox Name="NewStatusTextBox" Width="150" Height="30" Margin="5"/>
-            <Button Content="Add Status" Width="100" Height="30" Margin="5" Click="AddStatusButton_Click"/>
-            
         </StackPanel>
 
         <!-- DataGrid להצגת המשימות -->
         <DataGrid Name="TasksDataGrid" Grid.Row="1" AutoGenerateColumns="False" HorizontalAlignment="Stretch"
-          VerticalAlignment="Stretch" Margin="10" RowHeight="30" CanUserAddRows="False" ColumnWidth="*">
+                  VerticalAlignment="Stretch" Margin="10" RowHeight="30" CanUserAddRows="False" ColumnWidth="*">
             <DataGrid.Resources>
+                <!-- עיצוב כותרות -->
                 <Style TargetType="DataGridColumnHeader">
                     <Setter Property="Background" Value="LightBlue"/>
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="Foreground" Value="Black"/>
                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
                 </Style>
+                <!-- עיצוב שורות לפי סטטוס -->
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
-                        <!-- צביעה לפי סטטוס -->
                         <DataTrigger Binding="{Binding Path=Status}" Value="Pending">
                             <Setter Property="Background" Value="LightYellow"/>
                         </DataTrigger>
@@ -69,7 +92,6 @@
                         <DataTrigger Binding="{Binding Path=Status}" Value="In Progress">
                             <Setter Property="Background" Value="LightBlue"/>
                         </DataTrigger>
-                        <!-- טריגר לחיווי במעבר עכבר -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Background" Value="LightCyan"/>
                         </Trigger>
@@ -78,22 +100,21 @@
             </DataGrid.Resources>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Binding="{Binding Path=Id}" Width="50" SortMemberPath="Id"/>
-                <DataGridTextColumn Header="Title" Binding="{Binding Path=Title}"  SortMemberPath="Title"/>
-                <DataGridTextColumn Header="Description" Binding="{Binding Path=Description}"  SortMemberPath="Description"/>
-                <DataGridTextColumn Header="Due Date" Binding="{Binding Path=DueDate}"  SortMemberPath="DueDate"/>
-                <DataGridTextColumn Header="Status" Binding="{Binding Path=Status}"  SortMemberPath="Status"/>
+                <DataGridTextColumn Header="Title" Binding="{Binding Path=Title}" SortMemberPath="Title"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Path=Description}" SortMemberPath="Description"/>
+                <DataGridTextColumn Header="Due Date" Binding="{Binding Path=DueDate}" SortMemberPath="DueDate"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Path=Status}" SortMemberPath="Status"/>
                 <DataGridTemplateColumn Header="Recurring" Width="70">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="🔄️"
-                       Visibility="{Binding Path=IsRecurring, Converter={StaticResource BoolToVisibilityConverter}}"
-                       FontSize="18" Foreground="Blue" ToolTip="This task is recurring"/>
+                                       Visibility="{Binding Path=IsRecurring, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       FontSize="18" Foreground="Blue" ToolTip="This task is recurring"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-
 
         <!-- כפתורים -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
@@ -103,5 +124,4 @@
             <Button Content="Mark as Completed" Background="LightGreen" Click="MarkAsCompletedButton_Click"/>
         </StackPanel>
     </Grid>
-
 </Window>
